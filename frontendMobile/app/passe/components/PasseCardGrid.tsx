@@ -1,0 +1,61 @@
+import React, { useCallback } from "react";
+import { FlatList, StyleSheet, Dimensions } from "react-native";
+import PasseCardItem from "./PasseCardItem";
+import { PasseCard } from "../../../types/cardTypes";
+import { SPACING } from "../../../theme/tokens";
+
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = (width - SPACING.lg * 3) / 2; // 2 columns with proper spacing
+
+interface Props {
+  data: PasseCard[];
+  onRemove?: (id: string) => void;
+  onCardPress?: (card: PasseCard) => void;
+  contentBottomPad?: number;
+}
+
+const PasseCardGrid: React.FC<Props> = ({
+  data,
+  onRemove,
+  onCardPress,
+  contentBottomPad = 140,
+}) => {
+  const renderItem = useCallback(
+    ({ item }: { item: PasseCard }) => (
+      <PasseCardItem
+        card={item}
+        onRemove={onRemove}
+        onPress={onCardPress}
+        cardWidth={CARD_WIDTH}
+      />
+    ),
+    [onRemove, onCardPress]
+  );
+
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={(item) => item.id}
+      renderItem={renderItem}
+      numColumns={2}
+      columnWrapperStyle={styles.row}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: contentBottomPad },
+      ]}
+      showsVerticalScrollIndicator={false}
+    />
+  );
+};
+
+const styles = StyleSheet.create({
+  content: {
+    padding: SPACING.lg,
+  },
+  row: {
+    justifyContent: "space-between",
+    marginBottom: SPACING.lg,
+  },
+});
+
+export default PasseCardGrid;

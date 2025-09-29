@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stitch Design</title>
+    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#f98006",
+              "background-light": "#f8f7f5",
+              "background-dark": "#23190f",
+            },
+            fontFamily: {
+              display: ["Space Grotesk"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .material-symbols-outlined.fill {
+        font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+    </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100"
+  >
+    <div class="flex h-screen w-full">
+      <aside
+        class="w-[280px] bg-background-light dark:bg-background-dark p-4 flex flex-col justify-between shadow-lg"
+      >
+        <div>
+          <div class="flex items-center gap-2 p-2 mb-6">
+            <svg
+              fill="none"
+              height="32"
+              viewBox="0 0 32 32"
+              width="32"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M16 0L32 9.2376L24 14.118L8 4.8804L16 0Z"
+                fill="#f98006"
+              ></path>
+              <path
+                d="M0 9.2376L16 18.4752L16 28L0 18.7624L0 9.2376Z"
+                fill="#f98006"
+                fill-opacity="0.7"
+              ></path>
+              <path
+                d="M32 9.2376L16 18.4752L16 28L32 18.7624V9.2376Z"
+                fill="#f98006"
+                fill-opacity="0.5"
+              ></path>
+            </svg>
+            <span class="text-xl font-bold text-gray-900 dark:text-white"
+              >ManaKeep</span
+            >
+          </div>
+          <nav>
+            <ul class="flex flex-col gap-2">
+              <li>
+                <a
+                  class="flex items-center gap-4 rounded-lg bg-primary text-white py-3 px-4"
+                  href="#"
+                >
+                  <span class="material-symbols-outlined fill">home</span>
+                  <span class="font-bold">Home</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  class="flex items-center gap-4 rounded-lg hover:bg-primary/20 dark:hover:bg-primary/30 py-3 px-4 text-gray-700 dark:text-gray-300"
+                  href="#"
+                >
+                  <span class="material-symbols-outlined">style</span>
+                  <span class="font-semibold">Library</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  class="flex items-center gap-4 rounded-lg hover:bg-primary/20 dark:hover:bg-primary/30 py-3 px-4 text-gray-700 dark:text-gray-300"
+                  href="#"
+                >
+                  <span class="material-symbols-outlined">layers</span>
+                  <span class="font-semibold">Decks</span>
+                  <span
+                    class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold px-2 py-0.5 rounded-full"
+                    >3</span
+                  >
+                </a>
+              </li>
+              <li>
+                <a
+                  class="flex items-center gap-4 rounded-lg hover:bg-primary/20 dark:hover:bg-primary/30 py-3 px-4 text-gray-700 dark:text-gray-300"
+                  href="#"
+                >
+                  <span class="material-symbols-outlined"
+                    >format_list_bulleted</span
+                  >
+                  <span class="font-semibold">Want</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  class="flex items-center gap-4 rounded-lg hover:bg-primary/20 dark:hover:bg-primary/30 py-3 px-4 text-gray-700 dark:text-gray-300"
+                  href="#"
+                >
+                  <span class="material-symbols-outlined">shopping_bag</span>
+                  <span class="font-semibold">Trades</span>
+                  <span
+                    class="ml-auto bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
+                    >1</span
+                  >
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <a
+            class="flex items-center gap-4 rounded-lg hover:bg-primary/20 dark:hover:bg-primary/30 py-3 px-4 text-gray-700 dark:text-gray-300"
+            href="#"
+          >
+            <span class="material-symbols-outlined">account_circle</span>
+            <span class="font-semibold">Profile</span>
+          </a>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>
