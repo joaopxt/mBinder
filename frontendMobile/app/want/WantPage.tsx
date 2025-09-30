@@ -1,46 +1,36 @@
-import React, { useState, useCallback } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useMemo, useCallback } from "react";
+import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import HeaderBar from "../../components/layout/HeaderBar";
-import WantCardGrid from "./components/WantCardGrid";
-import { WantCard } from "../../types/cardTypes";
+import Sidebar from "../../components/layout/Sidebar";
 import Fab from "../../components/common/Fab";
-import Sidebar from "@/components/layout/Sidebar";
+import { useActiveUser } from "../../context/ActiveUserContext";
+import { WantCard } from "../../types/cardTypes";
+import WantCardGrid from "./components/WantCardGrid";
 
-const mockWantCards: WantCard[] = [
-  {
-    id: "sol-ring",
-    name: "Sol Ring",
-    quantity: 1,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCHzjpGe-1zX_ZzP1Ftoa-ciwxj4x-hab0UuR4sl4ln6ldyQAb2BkHiZ6hrhWXaQJBGeuaelx4kI2ekoLIsjngQqT0LhVW0vmCpi-QZpQx_PfrOyxf5eSH1h1skZmTRyXwsiIp_nDEbOGArC4oHrcYxk-zO7QtTBk8_PD9ROyKBP_0snSLKS5jjZ_Uxj6-h5V_jlr96z0NKpJe79w_SeK3EWiehfG3I4nh5Zv2LNwt1nHYdSvpIBDJImQe_uzeIeyt-2X4UfGbEvikx",
-  },
-  {
-    id: "lightning-bolt",
-    name: "Lightning Bolt",
-    quantity: 1,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC_JhcvgTuROkfPrCNAfljK0xCOR6imzOrSyzZ7qUav4DUK_DBnOS3IrrXcraLkcW_b5iOWSgzVu5beRuHX0pLLT5-CNiAI3gw8XEMx-_uWMY_R30C2Xs3dUXfrPcXZ7LXvM5p2fVIBnlO6TNarjJ1zPA6LGpHCc9-j6fICqzmEQP9_ISIhz29RRlTlupoURipI7085QDg0zYQbcfxMDQPP0YLIYq9FUMG7_2Ef648lYwHvmbJOds31vmB-pe8BQXI-Dg6IBg6_8Abl",
-  },
-  {
-    id: "counterspell",
-    name: "Counterspell",
-    quantity: 1,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuA44sti45M_-tIWecXchG0w5IlThbMy_YjFCEmpUZwkzEZiDt1xC_wp5nzgUkHqxD1uJkNK3YfRjnmJpQ3f4zdpZeopf61pOhJ0F0TSO7_-Ek-lKlZBK02bMNwrAxF5uYBGG1FOXqVy8jgNNMbufHtjXgwRrNyiVCoFrA_vj7hQRA8T26MDTg_QZukgYK9PNkDLmTuwCvGR2IwUcRjcpS82kgjqeJAQ9mQL1oEbcrnyl9sVXKl8MSTel51R7bEmwzp5dTmbZbfTDTer",
-  },
-];
+const IMAGE_FALLBACK = "https://placehold.co/200x280?text=Card";
 
 const WantInner: React.FC = () => {
   const t = useAppTheme();
   const router = useRouter();
-  const [wantCards, setWantCards] = useState<WantCard[]>(mockWantCards);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { user, want, wantLoading, refreshWant } = useActiveUser();
+  const [sidebarVisible, setSidebarVisible] = React.useState(false);
+
+  const wantCards: WantCard[] = useMemo(() => {
+    if (!want?.cartas) return [];
+    return want.cartas.map((c: any) => ({
+      id: String(c.id),
+      name: c.name ?? "Sem nome",
+      quantity: 1,
+      set: c.set ?? "",
+      image: c.image ?? IMAGE_FALLBACK,
+    }));
+  }, [want]);
 
   const handleRemove = useCallback((id: string) => {
-    setWantCards((prev) => prev.filter((card) => card.id !== id));
+    console.log("Remover carta (não implementado):", id);
   }, []);
 
   const handleCardPress = useCallback((card: WantCard) => {
@@ -48,17 +38,75 @@ const WantInner: React.FC = () => {
   }, []);
 
   const handleAdd = () => {
-    console.log("Add from Library (to implement)");
+    console.log("Adicionar carta à Want (não implementado)");
   };
 
-  const handleMenuPress = () => {
-    setSidebarVisible(!sidebarVisible);
-  };
-
+  const handleMenuPress = () => setSidebarVisible((v) => !v);
   const handleNavigate = (route: string) => {
     setSidebarVisible(false);
     router.push(route as any);
   };
+
+  if (!user) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Want List" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <Text style={{ color: t.text.primary, marginBottom: 8 }}>
+            Selecione um usuário na página de Usuário.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (wantLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Want List" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <ActivityIndicator color={t.text.muted} />
+          <Text style={{ color: t.text.muted, marginTop: 12 }}>
+            Carregando Want...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!want || wantCards.length === 0) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Want List" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <Text style={{ color: t.text.primary, marginBottom: 8 }}>
+            Nenhuma carta na Want de {user.nickname}.
+          </Text>
+          <Text
+            onPress={refreshWant}
+            style={{ color: t.text.primary, fontWeight: "600" }}
+          >
+            Recarregar
+          </Text>
+        </View>
+        <Sidebar
+          visible={sidebarVisible}
+          activeRoute="/want/WantPage"
+          onNavigate={handleNavigate}
+          onClose={() => setSidebarVisible(false)}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -66,7 +114,10 @@ const WantInner: React.FC = () => {
       edges={["top"]}
     >
       <View style={[styles.container, { backgroundColor: t.bg.base }]}>
-        <HeaderBar title="My WantList" onMenuPress={handleMenuPress} />
+        <HeaderBar
+          title={`Want - ${user.nickname}`}
+          onMenuPress={handleMenuPress}
+        />
 
         <WantCardGrid
           data={wantCards}
@@ -97,6 +148,12 @@ const WantPage: React.FC = () => (
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   container: { flex: 1, position: "relative" },
+  center: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
 
 export default WantPage;

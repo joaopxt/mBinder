@@ -56,6 +56,28 @@ export class WantService {
     return want;
   }
 
+  async findByUser(userId: number) {
+    const want = await this.wantRepositorio.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['cartas'], // ajuste se o nome for diferente
+    });
+
+    if (!want) return null;
+
+    // Mapeia para DTO simples evitando objetos pesados / loops
+    return {
+      id: want.id,
+      usuarioId: userId,
+      cartas: (want.cartas ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        set: c.setName,
+        image: c.imageNormal,
+        // acrescente campos necessários
+      })),
+    };
+  }
+
   async update(id: number, updateWantDto: UpdateWantDto) {
     const want = await this.findOne(id);
     await this.wantRepositorio.update(want.id, updateWantDto);

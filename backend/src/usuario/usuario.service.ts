@@ -43,8 +43,9 @@ export class UsuarioService {
   }
 
   findAll() {
+    console.log('Função chamada!');
     return this.usuarioRepositorio.find({
-      relations: ['decks', 'want', 'passe', 'colecao'],
+      select: ['id', 'nome', 'nickname', 'celular', 'idade'],
     });
   }
 

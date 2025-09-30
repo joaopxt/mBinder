@@ -30,6 +30,11 @@ export class WantController {
     return this.wantService.findOne(+id);
   }
 
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.wantService.findByUser(+userId);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateWantDto: UpdateWantDto) {
     return this.wantService.update(+id, updateWantDto);
