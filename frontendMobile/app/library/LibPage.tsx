@@ -6,21 +6,15 @@ import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
 import Sidebar from "../../components/layout/Sidebar";
-import SearchBar from "../../components/common/SearchBar";
+import SearchBar from "../../components/search/SearchBar";
 import Chip from "../../components/common/Chip";
 import KpiTile from "../../components/cards/KpiTile";
 import ColorBreakdownList from "../../components/charts/ColorBreakdownList";
 import FilterPanel from "../../components/filter/FilterPanel";
-import { FiltersState } from "../../components/filter/types";
+import { FilterState } from "../../components/filter/types";
 import CollectionCardList from "./CollectionCardList";
 import CollectionCard from "../../types/cardTypes";
-
-const initialFilters: FiltersState = {
-  sets: [],
-  color: undefined,
-  type: undefined,
-  rarity: undefined,
-};
+import SearchModal from "@/components/search/SearchModal";
 
 type TabMode = "stats" | "cards";
 
@@ -69,7 +63,14 @@ const LibContent: React.FC = () => {
 
   const [tab, setTab] = useState<TabMode>("stats");
   const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<FiltersState>(initialFilters);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    colors: [],
+    types: [],
+    sets: [],
+    rarity: [],
+    cmc: { min: 0, max: 20 },
+  });
   const [panelVisible, setPanelVisible] = useState(false);
   const [cards, setCards] = useState<CollectionCard[]>(MOCK_CARDS);
 
@@ -85,20 +86,26 @@ const LibContent: React.FC = () => {
     []
   );
 
-  const appliedFiltersCount =
-    filters.sets.length +
-    (filters.color ? 1 : 0) +
-    (filters.type ? 1 : 0) +
-    (filters.rarity ? 1 : 0);
+  const handleSearchPress = () => {
+    console.log("Search button pressed!"); // Debug log
+    setSearchModalVisible(true);
+  };
 
-  const filteredCards = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return cards;
-    return cards.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) || c.typeLine.toLowerCase().includes(q)
-    );
-  }, [query, cards]);
+  const handleSearchClose = () => {
+    setSearchModalVisible(false);
+  };
+
+  const handleSearch = (query: string) => {
+    console.log("Searching for:", query);
+    // Implement your search logic here
+    // For now, let's just close the modal after search
+    setSearchModalVisible(false);
+  };
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    console.log("Filters changed:", newFilters);
+  };
 
   const handleRemoveCard = (id: string) => {
     setCards((prev) => prev.filter((card) => card.id !== id));
@@ -118,13 +125,6 @@ const LibContent: React.FC = () => {
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
     >
-      <SearchBar
-        placeholder="Search your collection"
-        value={query}
-        onChange={setQuery}
-        onFilterPress={() => setPanelVisible(true)}
-      />
-
       <View style={styles.chipsRow}>
         <Chip
           label="Stats"
@@ -136,15 +136,6 @@ const LibContent: React.FC = () => {
           active={tab === "cards"}
           onPress={() => setTab("cards")}
         />
-        {appliedFiltersCount > 0 && (
-          <Chip
-            label={`${appliedFiltersCount} Filter${
-              appliedFiltersCount > 1 ? "s" : ""
-            }`}
-            active
-            onPress={() => setPanelVisible(true)}
-          />
-        )}
       </View>
 
       <View style={styles.section}>
@@ -168,12 +159,6 @@ const LibContent: React.FC = () => {
 
   const renderCardsViewHeader = () => (
     <View style={{ paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md }}>
-      <SearchBar
-        placeholder="Search cards..."
-        value={query}
-        onChange={setQuery}
-        onFilterPress={() => setPanelVisible(true)}
-      />
       <View style={[styles.chipsRow, { marginTop: SPACING.md }]}>
         <Chip
           label="Stats"
@@ -185,15 +170,6 @@ const LibContent: React.FC = () => {
           active={tab === "cards"}
           onPress={() => setTab("cards")}
         />
-        {appliedFiltersCount > 0 && (
-          <Chip
-            label={`${appliedFiltersCount} Filter${
-              appliedFiltersCount > 1 ? "s" : ""
-            }`}
-            active
-            onPress={() => setPanelVisible(true)}
-          />
-        )}
       </View>
     </View>
   );
@@ -208,31 +184,7 @@ const LibContent: React.FC = () => {
           title="Library"
           onMenuPress={handleMenuPress}
           onActionPress={() => console.log("Action")}
-        />
-
-        {tab === "stats" ? (
-          renderStatsView()
-        ) : (
-          <CollectionCardList
-            data={filteredCards}
-            onRemove={handleRemoveCard}
-            ListHeaderComponent={renderCardsViewHeader()}
-            onCardPress={(c) => console.log("Card pressed:", c.id)}
-            contentBottomPad={20}
-          />
-        )}
-
-        <FilterPanel
-          visible={panelVisible}
-          onClose={() => setPanelVisible(false)}
-          onClear={() => setFilters(initialFilters)}
-          onApply={(f) => {
-            setFilters(f);
-            setPanelVisible(false);
-            console.log("Applied filters:", f);
-          }}
-          filters={filters}
-          setFilters={setFilters}
+          onSearchPress={handleSearchPress}
         />
 
         <Sidebar
@@ -240,6 +192,14 @@ const LibContent: React.FC = () => {
           activeRoute="/library/LibPage"
           onNavigate={handleNavigate}
           onClose={() => setSidebarVisible(false)}
+        />
+        <SearchModal
+          visible={searchModalVisible}
+          onClose={handleSearchClose}
+          onSearch={handleSearch}
+          placeholder="Search cards..."
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
         />
       </View>
     </SafeAreaView>

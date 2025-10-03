@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "../../theme/ThemeProvider";
@@ -7,6 +7,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import UserProfileHeader from "./_components/UserProfileHeader";
 import UserStats from "./_components/UserStats";
 import UserAccountForm from "./_components/UserAccountForm";
+import { router } from "expo-router";
 
 const UserPage: React.FC = () => {
   const t = useAppTheme();
@@ -20,11 +21,13 @@ const UserPage: React.FC = () => {
     setSidebarVisible(false);
   };
 
-  const handleNavigate = (route: string) => {
-    // Navigation logic would go here
-    console.log("Navigate to:", route);
-    setSidebarVisible(false);
-  };
+  const handleNavigate = useCallback(
+    (route: string) => {
+      setSidebarVisible(false);
+      router.push(route as any);
+    },
+    [router]
+  );
 
   const handleSettingsPress = () => {
     // Settings logic would go here

@@ -1,44 +1,136 @@
-import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
-import TradeUserItem from "./components/TradeUserItem";
-import { TradeUser, MatchType } from "../../types/matchTypes";
+import { MatchType } from "../../types/matchTypes";
 import Sidebar from "@/components/layout/Sidebar";
+import { MatchCardResult } from "../../services/matchService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const mockUsers: TradeUser[] = [
-  {
-    id: "1",
-    name: "Ethan Carter",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBmjOEEXr5WhulBXRhTtIFjI_Ytw_8mWNXur9y17B95YiMELU6rl8wb35HcbmO9wVIAktVE5TIcIjiztoVgaQ-NBC6IKePcBg-JDZ6KEZ1pNol7Z9f57Sh63_Hw1p2lNq9FfjZUJFGTzpF2fZFAyHWSDSDdVSpp81N3YykbRCsgsmOQ1cDyk0Hh1-5D-dTl5zTD31fr8bpSXiduwSUnWrB_NiRHPDZfB-81YkrEcYCYkW_I99Ap7uQC2BwhBJu6FSvcF1HBgy4irG03",
-    commonCards: 12,
-  },
-  {
-    id: "2",
-    name: "Olivia Bennett",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCuu53lMam2_-Hl-CqAWvzAZ9UwikITPDIW9w7SfzcdvoUxY1EJkr96Kp5ybMbZxVx0TcGC5TrPDqFD9kpobdbGFgfU_6yC1GmhXuV15wyLc6btSWcYkPwuj4-JmeyeRyEgrJTLym4e2DfoYt8TVPrzZ7T6DJG6lWsWBQn8Ci_sDFti5GtRMNAv-4gT_vP2_ss3IZ_g335WFGUdqgwjgOnKjrC87jBEGe0S525LnI7_ARwVzkOOX0CoYjDzAh-mDxviRZA9CzltRcGt",
-    commonCards: 2,
-  },
-  {
-    id: "3",
-    name: "Noah Thompson",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBRaRMEQuCHTZycU-_Aid6adJQ0ne3VsWjzGqjuEshHA52wIKSF68fRfMYlL2EGJKRoQsqqpeCxJuCRjCaX1BQoldTlaUhKyRzGoqz1BujV0OSJyj8iL6tt0FqyynUFdWlCaYthId8ypT9okKq-SdVoQDCTGz4zZPCvmng_VWPXkrNlN0bk2T9SODmyuEIdaV1Ao9VFsg9FmGLm_craOOqzIrw5OXhXUF4uuRcjFDWj_1BSBtmAmsr312EATbyU_u-zer_i5Uz2sYP9",
-    commonCards: 1,
-  },
-];
+interface UserMatch {
+  usuario: string;
+  cards: MatchCardResult[]; // Changed from string[] to MatchCardResult[]
+  totalCards: number;
+}
+
+const UserMatchItem: React.FC<{
+  match: UserMatch;
+  matchType: MatchType;
+  onPress: (match: UserMatch) => void;
+}> = ({ match, matchType, onPress }) => {
+  const t = useAppTheme();
+
+  // Show first 5 cards, then "..." if there are more
+  const displayCards = match.cards.slice(0, 5);
+  const hasMoreCards = match.cards.length > 5;
+
+  return (
+    <TouchableOpacity
+      style={[styles.userCard, { backgroundColor: t.bg.alt }]}
+      onPress={() => onPress(match)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.userHeader}>
+        <Text style={[styles.userName, { color: t.text.primary }]}>
+          {match.usuario}
+        </Text>
+        <Text style={[styles.cardCount, { color: t.text.muted }]}>
+          {match.totalCards} card{match.totalCards !== 1 ? "s" : ""}
+        </Text>
+      </View>
+
+      <View style={styles.cardsList}>
+        {displayCards.map((card, index) => (
+          <View
+            key={index}
+            style={[styles.cardChip, { backgroundColor: t.bg.base }]}
+          >
+            <Text style={[styles.cardName, { color: t.text.primary }]}>
+              {card.name}
+            </Text>
+          </View>
+        ))}
+        {hasMoreCards && (
+          <View
+            style={[
+              styles.cardChip,
+              styles.moreChip,
+              { backgroundColor: t.bg.base },
+            ]}
+          >
+            <Text style={[styles.cardName, { color: t.text.muted }]}>
+              +{match.totalCards - 5} more...
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.tapHint}>
+        <Text style={[styles.tapHintText, { color: t.text.muted }]}>
+          Tap to view trade details
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const MatchResultsInner: React.FC = () => {
   const t = useAppTheme();
   const router = useRouter();
-  const params = useLocalSearchParams<{ type: MatchType }>();
-
+  const params = useLocalSearchParams<{
+    type: MatchType;
+    results?: string;
+    storageKey?: string;
+  }>();
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [matches, setMatches] = useState<MatchCardResult[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load matches from URL or AsyncStorage
+  useEffect(() => {
+    const loadMatches = async () => {
+      try {
+        let matchData: MatchCardResult[] = [];
+
+        if (params.results) {
+          // Small dataset from URL
+          matchData = JSON.parse(decodeURIComponent(params.results));
+          console.log("[MatchResults] Loaded matches from URL:", matchData);
+        } else if (params.storageKey) {
+          // Large dataset from AsyncStorage
+          const storedData = await AsyncStorage.getItem(params.storageKey);
+          if (storedData) {
+            matchData = JSON.parse(storedData);
+            console.log(
+              "[MatchResults] Loaded matches from AsyncStorage:",
+              matchData
+            );
+            // Clean up storage after loading
+            AsyncStorage.removeItem(params.storageKey);
+          }
+        }
+
+        setMatches(matchData);
+      } catch (error) {
+        console.error("[MatchResults] Failed to load matches:", error);
+        setMatches([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMatches();
+  }, [params.results, params.storageKey]);
 
   const handleMenuPress = () => {
     setSidebarVisible(!sidebarVisible);
@@ -49,19 +141,104 @@ const MatchResultsInner: React.FC = () => {
     router.push(route as any);
   };
 
-  const handleUserPress = useCallback(
-    (user: TradeUser) => {
-      router.push(`/match/TradePair?userId=${user.id}&type=${params.type}`);
-    },
-    [router, params.type]
+  const handleUserMatchPress = async (userMatch: UserMatch) => {
+    try {
+      // Store the selected user match data for TradePair
+      const tradeData = {
+        traderUser: userMatch.usuario,
+        matchType: params.type,
+        totalCards: userMatch.totalCards,
+        // Store the full card objects with images
+        allMatches: userMatch.cards,
+      };
+
+      const tradeJson = JSON.stringify(tradeData);
+      const storageKey = `trade-pair-${Date.now()}`;
+
+      await AsyncStorage.setItem(storageKey, tradeJson);
+
+      router.push(`/match/TradePair?storageKey=${storageKey}`);
+    } catch (error) {
+      console.error("[MatchResults] Failed to navigate to trade pair:", error);
+    }
+  };
+
+  // Group matches by user
+  const userMatches: UserMatch[] = useMemo(() => {
+    if (!matches || matches.length === 0) {
+      return [];
+    }
+
+    const grouped: { [usuario: string]: MatchCardResult[] } = {};
+
+    matches.forEach((match) => {
+      if (!grouped[match.usuario]) {
+        grouped[match.usuario] = [];
+      }
+      grouped[match.usuario].push(match);
+    });
+
+    return Object.entries(grouped)
+      .map(([usuario, cards]) => ({
+        usuario,
+        cards,
+        totalCards: cards.length,
+      }))
+      .sort((a, b) => b.totalCards - a.totalCards);
+  }, [matches]);
+
+  const renderUserMatch = ({ item }: { item: UserMatch }) => (
+    <UserMatchItem
+      match={item}
+      matchType={params.type!}
+      onPress={handleUserMatchPress}
+    />
   );
 
-  const renderUser = useCallback(
-    ({ item }: { item: TradeUser }) => (
-      <TradeUserItem user={item} onPress={handleUserPress} />
-    ),
-    [handleUserPress]
-  );
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Match Results" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={t.text.muted} />
+          <Text style={{ color: t.text.muted, marginTop: 12 }}>
+            Loading results...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (userMatches.length === 0) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Match Results" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <Text style={{ color: t.text.primary, marginBottom: 8 }}>
+            No matches found.
+          </Text>
+          <Text
+            onPress={() => router.back()}
+            style={{ color: (t as any).primary, fontWeight: "600" }}
+          >
+            Try Again
+          </Text>
+        </View>
+        <Sidebar
+          visible={sidebarVisible}
+          activeRoute="/match/MatchResults"
+          onNavigate={handleNavigate}
+          onClose={() => setSidebarVisible(false)}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -73,13 +250,19 @@ const MatchResultsInner: React.FC = () => {
 
         <View style={styles.content}>
           <Text style={[styles.title, { color: t.text.primary }]}>
-            Potential Trades
+            Found {userMatches.length} potential trade
+            {userMatches.length !== 1 ? "s" : ""}
+          </Text>
+          <Text style={[styles.subtitle, { color: t.text.muted }]}>
+            {params.type === "want"
+              ? "Users with cards you want"
+              : "Users who want your cards"}
           </Text>
 
           <FlatList
-            data={mockUsers}
-            keyExtractor={(item) => item.id}
-            renderItem={renderUser}
+            data={userMatches}
+            keyExtractor={(item) => item.usuario}
+            renderItem={renderUserMatch}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
           />
@@ -109,14 +292,67 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.lg,
   },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: SPACING.lg,
+  },
   title: {
     fontSize: 24,
     fontWeight: "700",
+    marginBottom: SPACING.xs,
+  },
+  subtitle: {
+    fontSize: 16,
     marginBottom: SPACING.lg,
   },
   list: {
+    gap: SPACING.md,
+    paddingBottom: 100,
+  },
+  userCard: {
+    padding: SPACING.md,
+    borderRadius: 12,
     gap: SPACING.sm,
-    paddingBottom: 100, // Space for bottom nav
+  },
+  userHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  cardCount: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  cardsList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SPACING.xs,
+  },
+  cardChip: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 6,
+  },
+  cardName: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  moreChip: {
+    opacity: 0.7,
+  },
+  tapHint: {
+    marginTop: SPACING.xs,
+    alignItems: "center",
+  },
+  tapHintText: {
+    fontSize: 11,
+    fontStyle: "italic",
   },
 });
 

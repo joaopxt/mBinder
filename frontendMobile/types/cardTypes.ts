@@ -18,3 +18,12 @@ export interface WantCard {
   image: string;
   quantity: number;
 }
+
+export interface TradeCard {
+  id: string;
+  name: string;
+  image: string;
+  set: string;
+  usuario?: string;
+  tipo?: "want" | "passe";
+}

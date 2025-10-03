@@ -9,8 +9,7 @@ export interface TradeCard {
   id: string;
   name: string;
   image: string;
-  type: string;
-  rarity: string;
+  set: string;
 }
 
 export interface TradePair {
@@ -19,4 +18,4 @@ export interface TradePair {
   user: TradeUser;
 }
 
-export type MatchType = "want" | "offer";
+export type MatchType = "want" | "passe";

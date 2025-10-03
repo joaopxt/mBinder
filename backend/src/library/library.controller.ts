@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { LibraryService } from './library.service';
 import { CreateLibraryDto } from './dto/create-library.dto';
@@ -14,14 +15,17 @@ import { UpdateLibraryDto } from './dto/update-library.dto';
 @Controller('library')
 export class LibraryController {
   constructor(private readonly libraryService: LibraryService) {}
-
-  @Get()
-  findAll() {
-    return this.libraryService.findAll();
+  @Get('search')
+  async searchCards(
+    @Query('query') query: string,
+    @Query('limit') limit?: string,
+  ) {
+    const limitNumber = limit ? parseInt(limit, 10) : 5;
+    return this.libraryService.searchCards(query, limitNumber);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.libraryService.findOne(+id);
+  @Get('search/all')
+  async searchAllCards(@Query('query') query: string) {
+    return this.libraryService.searchCardsAll(query);
   }
 }

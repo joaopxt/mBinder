@@ -8,7 +8,7 @@ import DeckList from "./components/DeckList";
 import { Deck } from "../../types/deckTypes";
 import Fab from "../../components/common/Fab";
 import Sidebar from "../../components/layout/Sidebar";
-import SearchBar from "../../components/common/SearchBar";
+import SearchBar from "../search/SearchBar";
 
 const mockDecks: Deck[] = [
   {

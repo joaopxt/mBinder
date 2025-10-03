@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
@@ -10,12 +10,16 @@ import ProgressIndicator from "./components/ProgressIndicator";
 import ActionButton from "../../components/common/ActionButton";
 import { MatchType } from "../../types/matchTypes";
 import Sidebar from "@/components/layout/Sidebar";
+import { useActiveUser } from "../../context/ActiveUserContext";
+import { useMatches } from "../../dataHooks/matchHook";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MatchStartInner: React.FC = () => {
   const t = useAppTheme();
   const router = useRouter();
+  const { user } = useActiveUser();
+  const { loadMatches, loading } = useMatches();
   const [selectedType, setSelectedType] = useState<MatchType | null>(null);
-
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
   const handleMenuPress = () => {
@@ -27,11 +31,58 @@ const MatchStartInner: React.FC = () => {
     router.push(route as any);
   };
 
-  const handleContinue = () => {
-    if (selectedType) {
-      router.push(`/match/MatchResults?type=${selectedType}`);
+  const handleContinue = async () => {
+    if (selectedType && user?.id) {
+      console.log("[MatchStart] Starting match with:", {
+        userId: user.id,
+        type: selectedType,
+      });
+      try {
+        const matchResults = await loadMatches(user.id, selectedType);
+        console.log("[MatchStart] Received match results:", matchResults);
+        console.log("[MatchStart] Match results length:", matchResults.length);
+
+        const resultsJson = JSON.stringify(matchResults);
+        const maxUrlLength = 6000; // Conservative limit for cross-platform compatibility
+
+        if (resultsJson.length < maxUrlLength) {
+          // Small dataset: use URL params
+          const encodedResults = encodeURIComponent(resultsJson);
+          router.push(
+            `/match/MatchResults?type=${selectedType}&results=${encodedResults}`
+          );
+        } else {
+          // Large dataset: use AsyncStorage
+          const storageKey = `match-results-${Date.now()}`;
+          await AsyncStorage.setItem(storageKey, resultsJson);
+          router.push(
+            `/match/MatchResults?type=${selectedType}&storageKey=${storageKey}`
+          );
+        }
+      } catch (error) {
+        console.error("[MatchStart] Failed to load matches:", error);
+        Alert.alert("Error", "Failed to load matches. Please try again.", [
+          { text: "OK" },
+        ]);
+      }
     }
   };
+
+  if (!user) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Match" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <Text style={{ color: t.text.primary }}>
+            Selecione um usuário primeiro.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -66,17 +117,17 @@ const MatchStartInner: React.FC = () => {
             <MatchOptionCard
               title="I offer"
               subtitle="My Passes vs Others' Wants"
-              active={selectedType === "offer"}
-              onPress={() => setSelectedType("offer")}
+              active={selectedType === "passe"}
+              onPress={() => setSelectedType("passe")}
             />
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
           <ActionButton
-            title="Continue"
+            title={loading ? "Loading..." : "Continue"}
             onPress={handleContinue}
-            disabled={!selectedType}
+            disabled={!selectedType || loading}
           />
         </View>
 
@@ -126,6 +177,12 @@ const styles = StyleSheet.create({
   footer: {
     padding: SPACING.lg,
     paddingBottom: 100, // Space for bottom nav
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: SPACING.lg,
   },
 });
 

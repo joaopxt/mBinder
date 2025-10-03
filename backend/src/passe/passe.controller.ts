@@ -30,6 +30,11 @@ export class PasseController {
     return this.passeService.findOne(+id);
   }
 
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.passeService.findByUser(+userId);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePasseDto: UpdatePasseDto) {
     return this.passeService.update(+id, updatePasseDto);

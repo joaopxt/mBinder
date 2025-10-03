@@ -124,15 +124,25 @@ export class UsuarioService {
           })
           .getMany());
 
-    // Realiza o match entre as cartas
-    const matches: { carta: string; usuario: string; tipo: string }[] = [];
+    // Realiza o match entre as cartas - agora retorna o objeto completo da carta
+    const matches: {
+      id: number;
+      name: string;
+      image: string;
+      set: string;
+      usuario: string;
+      tipo: string;
+    }[] = [];
 
     for (const userCard of userCards.cartas) {
       for (const opposite of oppositeCards) {
         for (const oppositeCard of opposite.cartas) {
           if (userCard.name.toLowerCase() === oppositeCard.name.toLowerCase()) {
             matches.push({
-              carta: userCard.name,
+              id: oppositeCard.id,
+              name: oppositeCard.name,
+              image: oppositeCard.imageNormal || oppositeCard.imageSmall || '',
+              set: oppositeCard.setName || '',
               usuario: opposite.usuario.nickname,
               tipo: oppositeType,
             });
@@ -140,6 +150,8 @@ export class UsuarioService {
         }
       }
     }
+
+    console.log(matches);
 
     return matches.length ? matches : { message: 'Nenhum match encontrado.' };
   }
@@ -193,14 +205,24 @@ export class UsuarioService {
       };
     }
 
-    // Realiza o match entre as cartas
-    const matches: { carta: string; usuario: string; tipo: string }[] = [];
+    // Realiza o match entre as cartas - agora retorna o objeto completo da carta
+    const matches: {
+      id: number;
+      name: string;
+      image: string;
+      set: string;
+      usuario: string;
+      tipo: string;
+    }[] = [];
 
     for (const userCard of userCards.cartas) {
       for (const oppositeCard of oppositeCards.cartas) {
         if (userCard.name.toLowerCase() === oppositeCard.name.toLowerCase()) {
           matches.push({
-            carta: userCard.name,
+            id: oppositeCard.id,
+            name: oppositeCard.name,
+            image: oppositeCard.imageNormal || oppositeCard.imageSmall || '',
+            set: oppositeCard.setName || '',
             usuario: oppositeCards.usuario.nickname,
             tipo: oppositeType,
           });

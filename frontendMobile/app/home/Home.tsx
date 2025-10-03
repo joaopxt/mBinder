@@ -9,14 +9,45 @@ import StatsGrid from "../../components/stats/StatsGrid";
 import QuickActionsCard from "../../components/cards/QuickActionsCard";
 import TradeCTA from "../../components/cards/TradeCTA";
 import Sidebar from "@/components/layout/Sidebar";
+import SearchModal from "../../components/search/SearchModal";
+import { FilterState } from "../../components/filter/types";
 
 const HomeInner: React.FC = () => {
   const t = useAppTheme();
   const router = useRouter();
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    colors: [],
+    types: [],
+    sets: [],
+    rarity: [],
+    cmc: { min: 0, max: 20 },
+  });
 
   const handleMenuPress = () => {
     setSidebarVisible(!sidebarVisible);
+  };
+
+  const handleSearchPress = () => {
+    console.log("Search button pressed!"); // Debug log
+    setSearchModalVisible(true);
+  };
+
+  const handleSearchClose = () => {
+    setSearchModalVisible(false);
+  };
+
+  const handleSearch = (query: string) => {
+    console.log("Searching for:", query);
+    // Implement your search logic here
+    // For now, let's just close the modal after search
+    setSearchModalVisible(false);
+  };
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    console.log("Filters changed:", newFilters);
   };
 
   const handleNavigate = (route: string) => {
@@ -38,7 +69,11 @@ const HomeInner: React.FC = () => {
       edges={["top"]}
     >
       <View style={[styles.container, { backgroundColor: t.bg.base }]}>
-        <HeaderBar title="mBinder" onMenuPress={handleMenuPress} />
+        <HeaderBar
+          title="mBinder"
+          onMenuPress={handleMenuPress}
+          onSearchPress={handleSearchPress} // Add this prop
+        />
 
         <ScrollView
           contentContainerStyle={styles.content}
@@ -60,6 +95,16 @@ const HomeInner: React.FC = () => {
           activeRoute="/home/Home"
           onNavigate={handleNavigate}
           onClose={() => setSidebarVisible(false)}
+        />
+
+        {/* Add the SearchModal component */}
+        <SearchModal
+          visible={searchModalVisible}
+          onClose={handleSearchClose}
+          onSearch={handleSearch}
+          placeholder="Search cards..."
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
         />
       </View>
     </SafeAreaView>

@@ -11,7 +11,9 @@ interface HeaderBarProps {
   actionIcon?: string;
   onMenuPress?: () => void;
   menuIcon?: string;
-  showMenu?: boolean; // kept for compatibility (ignored if false: menu still shows)
+  showMenu?: boolean;
+  showSearch?: boolean; // New prop to show/hide search icon
+  onSearchPress?: () => void; // New prop for search action
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -23,6 +25,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   onMenuPress,
   menuIcon = "≡",
   showMenu = true,
+  showSearch = true,
+  onSearchPress,
 }) => {
   const t = useAppTheme();
 
@@ -38,7 +42,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       ]}
     >
       <View style={styles.leftGroup}>
-        {/* Menu ALWAYS first (even if showMenu is false for backward calls) */}
+        {/* Menu ALWAYS first */}
         <Pressable
           onPress={onMenuPress}
           style={styles.button}
@@ -64,20 +68,34 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         {title}
       </Text>
 
-      {onActionPress ? (
-        <Pressable
-          onPress={onActionPress}
-          style={styles.button}
-          android_ripple={{ color: t.primarySoft }}
-        >
-          <Text style={[styles.icon, { color: t.text.primary }]}>
-            {actionIcon}
-          </Text>
-        </Pressable>
-      ) : (
-        // Keep spacing symmetry: if no action, reserve space
-        <View style={styles.button} />
-      )}
+      <View style={styles.rightGroup}>
+        {/* Search icon */}
+        {showSearch && (
+          <Pressable
+            onPress={onSearchPress}
+            style={styles.button}
+            android_ripple={{ color: t.primarySoft }}
+          >
+            <Text style={[styles.icon, { color: t.text.primary }]}>🔍</Text>
+          </Pressable>
+        )}
+
+        {/* Action button */}
+        {onActionPress && (
+          <Pressable
+            onPress={onActionPress}
+            style={styles.button}
+            android_ripple={{ color: t.primarySoft }}
+          >
+            <Text style={[styles.icon, { color: t.text.primary }]}>
+              {actionIcon}
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Keep spacing symmetry if no buttons */}
+        {!showSearch && !onActionPress && <View style={styles.button} />}
+      </View>
     </View>
   );
 };
@@ -93,6 +111,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   leftGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  rightGroup: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,

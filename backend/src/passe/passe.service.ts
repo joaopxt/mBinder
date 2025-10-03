@@ -56,6 +56,26 @@ export class PasseService {
     return passe;
   }
 
+  async findByUser(userId: number) {
+    const passe = await this.passeRepositorio.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['cartas'],
+    });
+
+    if (!passe) return null;
+
+    return {
+      id: passe.id,
+      usuarioId: userId,
+      cartas: (passe.cartas ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        set: c.setName,
+        image: c.imageNormal,
+      })),
+    };
+  }
+
   async update(id: number, updatePasseDto: UpdatePasseDto) {
     const passe = await this.findOne(id);
     await this.passeRepositorio.update(passe.id, updatePasseDto);

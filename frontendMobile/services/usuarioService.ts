@@ -21,3 +21,8 @@ export async function fetchUsuarios(): Promise<UsuarioDTO[]> {
     throw error;
   }
 }
+
+export async function fetchUsuario(nickname: string): Promise<UsuarioDTO> {
+  const response = await api.get<UsuarioDTO>(`/usuario/${nickname}`);
+  return response.data;
+}

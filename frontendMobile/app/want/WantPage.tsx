@@ -1,33 +1,49 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import HeaderBar from "../../components/layout/HeaderBar";
 import Sidebar from "../../components/layout/Sidebar";
-import Fab from "../../components/common/Fab";
 import { useActiveUser } from "../../context/ActiveUserContext";
+import { useUserWant } from "../../dataHooks/wantHook";
 import { WantCard } from "../../types/cardTypes";
 import WantCardGrid from "./components/WantCardGrid";
+import { FilterState } from "@/components/filter/types";
+import SearchModal from "@/components/search/SearchModal";
 
 const IMAGE_FALLBACK = "https://placehold.co/200x280?text=Card";
 
 const WantInner: React.FC = () => {
   const t = useAppTheme();
   const router = useRouter();
-  const { user, want, wantLoading, refreshWant } = useActiveUser();
+  const { user } = useActiveUser();
+  const {
+    want,
+    loading: wantLoading,
+    error,
+    refreshWant,
+  } = useUserWant(user?.id ?? null);
   const [sidebarVisible, setSidebarVisible] = React.useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    colors: [],
+    types: [],
+    sets: [],
+    rarity: [],
+    cmc: { min: 0, max: 20 },
+  });
 
   const wantCards: WantCard[] = useMemo(() => {
     if (!want?.cartas) return [];
     return want.cartas.map((c: any) => ({
       id: String(c.id),
-      name: c.name ?? "Sem nome",
+      name: c.name ?? c.nome ?? "Sem nome",
       quantity: 1,
-      set: c.set ?? "",
+      set: c.set ?? c.edicao ?? "",
       image: c.image ?? IMAGE_FALLBACK,
     }));
-  }, [want]);
+  }, [want?.cartas]);
 
   const handleRemove = useCallback((id: string) => {
     console.log("Remover carta (não implementado):", id);
@@ -37,15 +53,36 @@ const WantInner: React.FC = () => {
     console.log("Card pressed:", card.id);
   }, []);
 
-  const handleAdd = () => {
-    console.log("Adicionar carta à Want (não implementado)");
+  const handleMenuPress = useCallback(() => {
+    setSidebarVisible((prev) => !prev);
+  }, []);
+
+  const handleSearchPress = () => {
+    setSearchModalVisible(true);
   };
 
-  const handleMenuPress = () => setSidebarVisible((v) => !v);
-  const handleNavigate = (route: string) => {
-    setSidebarVisible(false);
-    router.push(route as any);
+  const handleSearchClose = () => {
+    setSearchModalVisible(false);
   };
+
+  const handleSearch = (query: string) => {
+    console.log("Searching wants for:", query);
+    // Implement search logic for wants
+    setSearchModalVisible(false);
+  };
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    console.log("Want filters changed:", newFilters);
+  };
+
+  const handleNavigate = useCallback(
+    (route: string) => {
+      setSidebarVisible(false);
+      router.push(route as any);
+    },
+    [router]
+  );
 
   if (!user) {
     return (
@@ -71,9 +108,31 @@ const WantInner: React.FC = () => {
       >
         <HeaderBar title="Want List" onMenuPress={handleMenuPress} />
         <View style={styles.center}>
-          <ActivityIndicator color={t.text.muted} />
+          <ActivityIndicator size="large" color={t.text.muted} />
           <Text style={{ color: t.text.muted, marginTop: 12 }}>
             Carregando Want...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: t.bg.base }]}
+        edges={["top"]}
+      >
+        <HeaderBar title="Want List" onMenuPress={handleMenuPress} />
+        <View style={styles.center}>
+          <Text style={{ color: t.text.primary, marginBottom: 8 }}>
+            {error}
+          </Text>
+          <Text
+            onPress={refreshWant}
+            style={{ color: (t as any).primary, fontWeight: "600" }}
+          >
+            Tentar novamente
           </Text>
         </View>
       </SafeAreaView>
@@ -86,14 +145,18 @@ const WantInner: React.FC = () => {
         style={[styles.safe, { backgroundColor: t.bg.base }]}
         edges={["top"]}
       >
-        <HeaderBar title="Want List" onMenuPress={handleMenuPress} />
+        <HeaderBar
+          title="Want List"
+          onMenuPress={handleMenuPress}
+          onSearchPress={handleSearchPress}
+        />
         <View style={styles.center}>
           <Text style={{ color: t.text.primary, marginBottom: 8 }}>
             Nenhuma carta na Want de {user.nickname}.
           </Text>
           <Text
             onPress={refreshWant}
-            style={{ color: t.text.primary, fontWeight: "600" }}
+            style={{ color: (t as any).primary, fontWeight: "600" }}
           >
             Recarregar
           </Text>
@@ -103,6 +166,14 @@ const WantInner: React.FC = () => {
           activeRoute="/want/WantPage"
           onNavigate={handleNavigate}
           onClose={() => setSidebarVisible(false)}
+        />
+        <SearchModal
+          visible={searchModalVisible}
+          onClose={handleSearchClose}
+          onSearch={handleSearch}
+          placeholder="Search cards..."
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
         />
       </SafeAreaView>
     );
@@ -117,6 +188,7 @@ const WantInner: React.FC = () => {
         <HeaderBar
           title={`Want - ${user.nickname}`}
           onMenuPress={handleMenuPress}
+          onSearchPress={handleSearchPress}
         />
 
         <WantCardGrid
@@ -126,13 +198,19 @@ const WantInner: React.FC = () => {
           contentBottomPad={140}
         />
 
-        <Fab onPress={handleAdd} icon="+" />
-
         <Sidebar
           visible={sidebarVisible}
           activeRoute="/want/WantPage"
           onNavigate={handleNavigate}
           onClose={() => setSidebarVisible(false)}
+        />
+        <SearchModal
+          visible={searchModalVisible}
+          onClose={handleSearchClose}
+          onSearch={handleSearch}
+          placeholder="Search cards..."
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
         />
       </View>
     </SafeAreaView>

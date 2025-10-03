@@ -9,14 +9,18 @@ interface SearchBarProps {
   onChange: (text: string) => void;
   onFilterPress?: () => void;
   disabled?: boolean;
+  autoFocus?: boolean; // New prop for auto focus
+  onSubmit?: () => void; // New prop for submit action
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  placeholder,
+  placeholder = "Search cards...",
   value,
   onChange,
   onFilterPress,
   disabled,
+  autoFocus = false,
+  onSubmit,
 }) => {
   const t = useAppTheme();
 
@@ -36,8 +40,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
         value={value}
         editable={!disabled}
         onChangeText={onChange}
+        onSubmitEditing={onSubmit}
         style={[styles.input, { color: t.text.primary }]}
         returnKeyType="search"
+        autoFocus={autoFocus}
       />
       {!!onFilterPress && (
         <Pressable
