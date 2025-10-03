@@ -14,8 +14,8 @@ import { useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import SearchBar from "./SearchBar";
 import SearchPreview from "./SearchPreview";
-import FilterPanel from "../../components/filter/FilterPanel";
-import { FilterState } from "../../components/filter/types";
+import FilterPanel from "../filter/FilterPanel";
+import { FilterState } from "../filter/types";
 import { searchCards, SearchResult } from "../../services/libraryService";
 
 interface SearchModalProps {
@@ -87,29 +87,24 @@ const SearchModal: React.FC<SearchModalProps> = ({
 
   // Debounced search for live preview
   useEffect(() => {
-    console.log(`[SearchModal] Search query changed: "${searchQuery}"`);
-
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
     if (searchQuery.trim().length > 0) {
-      console.log(`[SearchModal] Setting up search for: "${searchQuery}"`);
       setShowPreview(true);
 
       searchTimeoutRef.current = setTimeout(async () => {
         try {
-          console.log(`[SearchModal] Executing search for: "${searchQuery}"`);
           const results = await searchCards(searchQuery, 5);
-          console.log(`[SearchModal] Search results:`, results);
+
           setPreviewResults(results);
         } catch (error) {
           console.error("[SearchModal] Preview search failed:", error);
           setPreviewResults([]);
         }
-      }, 300); // 300ms debounce
+      }, 300);
     } else {
-      console.log(`[SearchModal] Empty query, hiding preview`);
       setShowPreview(false);
       setPreviewResults([]);
     }
@@ -132,14 +127,12 @@ const SearchModal: React.FC<SearchModalProps> = ({
   };
 
   const handleSearchChange = (text: string) => {
-    console.log(`[SearchModal] handleSearchChange called with: "${text}"`);
     setSearchQuery(text);
   };
 
   const handlePreviewCardPress = (card: SearchResult) => {
-    console.log(`[SearchModal] Preview card pressed: ${card.name}`);
     // Navigate directly to card page
-    //router.push(`/components/carta/CartaPage?cardId=${card.id}`);
+    router.push(`/carta/CartaPage?cardId=${card.id}`);
     onClose();
   };
 
@@ -167,11 +160,6 @@ const SearchModal: React.FC<SearchModalProps> = ({
     };
     onFiltersChange?.(clearedFilters);
   };
-
-  // Debug logging
-  console.log(
-    `[SearchModal] Render - showPreview: ${showPreview}, previewResults.length: ${previewResults.length}`
-  );
 
   if (!visible) return null;
 

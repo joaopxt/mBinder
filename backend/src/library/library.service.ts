@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLibraryDto } from './dto/create-library.dto';
 import { UpdateLibraryDto } from './dto/update-library.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,8 +16,31 @@ export class LibraryService {
     return `This action returns all library`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} library`;
+  async findOne(id: number): Promise<Carta> {
+    console.log(`[LibraryService] findOne called with id: ${id}`);
+
+    try {
+      const carta = await this.cartaRepositorio.findOne({
+        where: { id },
+      });
+
+      if (!carta) {
+        console.log(`[LibraryService] Card with id ${id} not found`);
+        throw new NotFoundException(`Card with ID ${id} not found`);
+      }
+
+      console.log(`[LibraryService] Found card: ${carta.name}`);
+      return carta;
+    } catch (error) {
+      console.error(
+        `[LibraryService] Error finding card with id ${id}:`,
+        error,
+      );
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to find card with ID ${id}`);
+    }
   }
 
   async searchCards(query: string, limit: number = 5): Promise<Carta[]> {

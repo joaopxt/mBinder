@@ -1,14 +1,15 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import HeaderBar from "../../components/layout/HeaderBar";
 import DeckList from "./components/DeckList";
 import { Deck } from "../../types/deckTypes";
 import Fab from "../../components/common/Fab";
 import Sidebar from "../../components/layout/Sidebar";
-import SearchBar from "../search/SearchBar";
+import { FilterState } from "@/components/filter/types";
+import SearchModal from "@/components/search/SearchModal";
 
 const mockDecks: Deck[] = [
   {
@@ -36,6 +37,14 @@ const DeckInner: React.FC = () => {
   const router = useRouter();
   const [decks, setDecks] = useState<Deck[]>(mockDecks);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    colors: [],
+    types: [],
+    sets: [],
+    rarity: [],
+    cmc: { min: 0, max: 20 },
+  });
 
   const handleDeckPress = useCallback(
     (deck: Deck) => {
@@ -52,6 +61,25 @@ const DeckInner: React.FC = () => {
     setSidebarVisible(!sidebarVisible);
   };
 
+  const handleSearchPress = () => {
+    setSearchModalVisible(true);
+  };
+
+  const handleSearchClose = () => {
+    setSearchModalVisible(false);
+  };
+
+  const handleSearch = (query: string) => {
+    console.log("Searching wants for:", query);
+    // Implement search logic for wants
+    setSearchModalVisible(false);
+  };
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    console.log("Want filters changed:", newFilters);
+  };
+
   const handleNavigate = (route: string) => {
     setSidebarVisible(false);
     router.push(route as any);
@@ -63,7 +91,11 @@ const DeckInner: React.FC = () => {
       edges={["top"]}
     >
       <View style={[styles.container, { backgroundColor: t.bg.base }]}>
-        <HeaderBar title="Decks" onMenuPress={handleMenuPress} />
+        <HeaderBar
+          title="Decks"
+          onMenuPress={handleMenuPress}
+          onSearchPress={handleSearchPress}
+        />
         <DeckList
           data={decks}
           onDeckPress={handleDeckPress}
@@ -76,15 +108,26 @@ const DeckInner: React.FC = () => {
           onNavigate={handleNavigate}
           onClose={() => setSidebarVisible(false)}
         />
+        <SearchModal
+          visible={searchModalVisible}
+          onClose={handleSearchClose}
+          onSearch={handleSearch}
+          placeholder="Search cards..."
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
       </View>
     </SafeAreaView>
   );
 };
 
 const DeckPage: React.FC = () => (
-  <ThemeProvider forceDark>
-    <DeckInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <DeckInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

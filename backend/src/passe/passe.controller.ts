@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { PasseService } from './passe.service';
 import { CreatePasseDto } from './dto/create-passe.dto';
@@ -59,5 +61,35 @@ export class PasseController {
     @Body('cartaIds') cartaIds: number[],
   ) {
     return this.passeService.removeCartasFromPasse(passeId, cartaIds);
+  }
+
+  @Post(':userId/bulk-import')
+  async bulkImport(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() body: { cardNames: string[] },
+  ) {
+    // Validate input
+    if (!body.cardNames || !Array.isArray(body.cardNames)) {
+      throw new BadRequestException('cardNames must be an array of strings');
+    }
+
+    if (body.cardNames.length === 0) {
+      throw new BadRequestException('cardNames array cannot be empty');
+    }
+
+    if (body.cardNames.some((name) => typeof name !== 'string')) {
+      throw new BadRequestException('All cardNames must be strings');
+    }
+
+    try {
+      const result = await this.passeService.addBulkCards(
+        userId,
+        body.cardNames,
+      );
+      return result;
+    } catch (error) {
+      console.error(`[PasseController] Bulk import failed:`, error);
+      throw error;
+    }
   }
 }

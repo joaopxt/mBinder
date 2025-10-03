@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
@@ -143,9 +143,12 @@ const MatchStartInner: React.FC = () => {
 };
 
 const MatchStart: React.FC = () => (
-  <ThemeProvider forceDark>
-    <MatchStartInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <MatchStartInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

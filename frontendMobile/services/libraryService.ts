@@ -1,5 +1,4 @@
 import api from "./api";
-import CollectionCard from "../types/cardTypes";
 
 export interface SearchResult {
   id: string;
@@ -8,6 +7,55 @@ export interface SearchResult {
   imageSmall?: string;
   setName?: string;
   typeLine?: string;
+}
+
+// Helper function to handle errors properly
+function handleApiError(error: unknown, context: string): void {
+  console.error(`[libraryService] ${context} failed:`, error);
+
+  if (error && typeof error === "object" && "response" in error) {
+    const axiosError = error as {
+      response?: {
+        data?: any;
+        status?: number;
+        statusText?: string;
+      };
+      message?: string;
+    };
+
+    if (axiosError.response) {
+      console.error(
+        `[libraryService] Error response:`,
+        axiosError.response.data
+      );
+      console.error(
+        `[libraryService] Error status:`,
+        axiosError.response.status
+      );
+      console.error(
+        `[libraryService] Error statusText:`,
+        axiosError.response.statusText
+      );
+    } else if (axiosError.message) {
+      console.error(`[libraryService] Error message:`, axiosError.message);
+    }
+  } else if (error instanceof Error) {
+    console.error(`[libraryService] Error message:`, error.message);
+    console.error(`[libraryService] Error stack:`, error.stack);
+  } else {
+    console.error(`[libraryService] Unknown error type:`, String(error));
+  }
+}
+
+export async function getCardById(cardId: string): Promise<SearchResult> {
+  try {
+    const response = await api.get<SearchResult>(`/library/${cardId}`);
+
+    return response.data;
+  } catch (error: unknown) {
+    handleApiError(error, "Get card by ID");
+    throw new Error("Failed to get card details");
+  }
 }
 
 export async function searchCards(
@@ -20,18 +68,10 @@ export async function searchCards(
       return [];
     }
 
-    console.log(
-      `[libraryService] Searching for: "${query}" with limit: ${limit}`
-    );
-
     const response = await api.get<SearchResult[]>("/library/search", {
       params: { query: query.trim(), limit },
     });
 
-    console.log(`[libraryService] API Response:`, response.data);
-    console.log(`[libraryService] Found ${response.data.length} results`);
-
-    // Validate the response structure
     if (!Array.isArray(response.data)) {
       console.error(
         "[libraryService] Invalid response format - not an array:",
@@ -42,25 +82,7 @@ export async function searchCards(
 
     return response.data;
   } catch (error: unknown) {
-    console.error("[libraryService] Search failed:", error);
-
-    // Type guard for axios error
-    if (error && typeof error === "object" && "response" in error) {
-      const axiosError = error as any; // Type assertion for axios error
-      console.error(
-        "[libraryService] Error response:",
-        axiosError.response?.data
-      );
-      console.error(
-        "[libraryService] Error status:",
-        axiosError.response?.status
-      );
-    } else if (error instanceof Error) {
-      console.error("[libraryService] Error message:", error.message);
-    } else {
-      console.error("[libraryService] Unknown error type:", String(error));
-    }
-
+    handleApiError(error, "Search");
     return [];
   }
 }
@@ -72,34 +94,13 @@ export async function searchAllCards(query: string): Promise<SearchResult[]> {
       return [];
     }
 
-    console.log(`[libraryService] Searching all cards for: "${query}"`);
-
     const response = await api.get<SearchResult[]>("/library/search/all", {
       params: { query: query.trim() },
     });
 
-    console.log(`[libraryService] Found ${response.data.length} total results`);
     return response.data;
   } catch (error: unknown) {
-    console.error("[libraryService] Search all failed:", error);
-
-    // Type guard for axios error
-    if (error && typeof error === "object" && "response" in error) {
-      const axiosError = error as any; // Type assertion for axios error
-      console.error(
-        "[libraryService] Error response:",
-        axiosError.response?.data
-      );
-      console.error(
-        "[libraryService] Error status:",
-        axiosError.response?.status
-      );
-    } else if (error instanceof Error) {
-      console.error("[libraryService] Error message:", error.message);
-    } else {
-      console.error("[libraryService] Unknown error type:", String(error));
-    }
-
+    handleApiError(error, "Search all");
     return [];
   }
 }

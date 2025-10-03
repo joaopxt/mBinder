@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState } from "react";
 import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import HeaderBar from "../../components/layout/HeaderBar";
 import PasseCardGrid from "./components/PasseCardGrid";
@@ -11,6 +11,9 @@ import { useActiveUser } from "../../context/ActiveUserContext";
 import { useUserPasse } from "../../dataHooks/passeHook";
 import { FilterState } from "@/components/filter/types";
 import SearchModal from "@/components/search/SearchModal";
+import BulkImportModal from "@/components/common/BulkImportModal";
+import BulkImportFab from "@/components/common/BulkImportFab";
+import { bulkImportCards } from "@/services/passeService";
 
 const IMAGE_FALLBACK = "https://placehold.co/200x280?text=Card";
 
@@ -26,6 +29,7 @@ const PasseInner: React.FC = () => {
   } = useUserPasse(user?.id ?? null);
   const [sidebarVisible, setSidebarVisible] = React.useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [bulkImportVisible, setBulkImportVisible] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     colors: [],
     types: [],
@@ -50,9 +54,12 @@ const PasseInner: React.FC = () => {
     // TODO: Implement remove functionality
   }, []);
 
-  const handleCardPress = useCallback((card: PasseCard) => {
-    console.log("Card pressed:", card.id);
-  }, []);
+  const handleCardPress = useCallback(
+    (card: PasseCard) => {
+      router.push(`/carta/CartaPage?cardId=${card.id}`);
+    },
+    [router]
+  );
 
   const handleMenuPress = useCallback(() => {
     setSidebarVisible((prev) => !prev);
@@ -67,14 +74,37 @@ const PasseInner: React.FC = () => {
   };
 
   const handleSearch = (query: string) => {
-    console.log("Searching wants for:", query);
-    // Implement search logic for wants
+    console.log("Searching passe for:", query);
     setSearchModalVisible(false);
   };
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
-    console.log("Want filters changed:", newFilters);
+    console.log("Passe filters changed:", newFilters);
+  };
+
+  const handleBulkImportPress = () => {
+    setBulkImportVisible(true);
+  };
+
+  const handleBulkImportClose = () => {
+    setBulkImportVisible(false);
+  };
+
+  const handleBulkImport = async (cardNames: string[]) => {
+    if (!user?.id) {
+      throw new Error("No user selected");
+    }
+
+    const result = await bulkImportCards(user.id, cardNames);
+
+    // Refresh the passe list to show new cards
+    await refreshPasse();
+
+    // Show detailed result if needed
+    if (result.notFound.length > 0 || result.alreadyExists.length > 0) {
+      console.log("Import completed with issues:", result);
+    }
   };
 
   const handleNavigate = useCallback(
@@ -162,6 +192,7 @@ const PasseInner: React.FC = () => {
             Recarregar
           </Text>
         </View>
+        <BulkImportFab onPress={handleBulkImportPress} />
         <Sidebar
           visible={sidebarVisible}
           activeRoute="/passe/PassePage"
@@ -175,6 +206,12 @@ const PasseInner: React.FC = () => {
           placeholder="Search cards..."
           filters={filters}
           onFiltersChange={handleFiltersChange}
+        />
+        <BulkImportModal
+          visible={bulkImportVisible}
+          onClose={handleBulkImportClose}
+          onImport={handleBulkImport}
+          title="Import Cards to Passe"
         />
       </SafeAreaView>
     );
@@ -199,6 +236,8 @@ const PasseInner: React.FC = () => {
           contentBottomPad={140}
         />
 
+        <BulkImportFab onPress={handleBulkImportPress} />
+
         <Sidebar
           visible={sidebarVisible}
           activeRoute="/passe/PassePage"
@@ -213,15 +252,24 @@ const PasseInner: React.FC = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
         />
+        <BulkImportModal
+          visible={bulkImportVisible}
+          onClose={handleBulkImportClose}
+          onImport={handleBulkImport}
+          title="Import Cards to Passe"
+        />
       </View>
     </SafeAreaView>
   );
 };
 
 const PassePage: React.FC = () => (
-  <ThemeProvider forceDark>
-    <PasseInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <PasseInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

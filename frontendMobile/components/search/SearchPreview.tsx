@@ -17,16 +17,7 @@ const SearchPreview: React.FC<SearchPreviewProps> = ({
 }) => {
   const t = useAppTheme();
 
-  // Debug logging
-  console.log(
-    `[SearchPreview] Render - visible: ${visible}, results:`,
-    results
-  );
-
   if (!visible || results.length === 0) {
-    console.log(
-      `[SearchPreview] Not rendering - visible: ${visible}, results.length: ${results.length}`
-    );
     return null;
   }
 
@@ -37,7 +28,6 @@ const SearchPreview: React.FC<SearchPreviewProps> = ({
     item: SearchResult;
     index: number;
   }) => {
-    console.log(`[SearchPreview] Rendering item: ${item.name}`);
     return (
       <Pressable
         style={[
@@ -48,7 +38,6 @@ const SearchPreview: React.FC<SearchPreviewProps> = ({
           },
         ]}
         onPress={() => {
-          console.log(`[SearchPreview] Item pressed: ${item.name}`);
           onCardPress(item);
         }}
         android_ripple={{ color: t.primarySoft }}
@@ -65,10 +54,6 @@ const SearchPreview: React.FC<SearchPreviewProps> = ({
     );
   };
 
-  console.log(
-    `[SearchPreview] Rendering FlatList with ${results.length} items`
-  );
-
   return (
     <View
       style={[
@@ -83,13 +68,13 @@ const SearchPreview: React.FC<SearchPreviewProps> = ({
         data={results}
         keyExtractor={(item, index) => {
           const key = `${item.id}-${index}`;
-          console.log(`[SearchPreview] Key for ${item.name}: ${key}`);
+
           return key;
         }}
         renderItem={renderItem}
         scrollEnabled={false}
         keyboardShouldPersistTaps="handled"
-        removeClippedSubviews={false} // Helps with rendering issues
+        removeClippedSubviews={false}
         ListEmptyComponent={() => {
           console.log(`[SearchPreview] ListEmptyComponent rendered`);
           return (

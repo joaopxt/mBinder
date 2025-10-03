@@ -6,6 +6,7 @@ import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { In, Repository } from 'typeorm';
 import { Passe } from './entities/passe.entity';
 import { Carta } from 'src/library/entities/library.entity';
+import { BulkImportResult, UtilsService } from 'src/utils/utils.service';
 
 @Injectable()
 export class PasseService {
@@ -16,6 +17,7 @@ export class PasseService {
     private passeRepositorio: Repository<Passe>,
     @InjectRepository(Carta)
     private cartaRepositorio: Repository<Carta>,
+    private utilsService: UtilsService,
   ) {}
 
   async create(createPasseDto: CreatePasseDto) {
@@ -122,5 +124,39 @@ export class PasseService {
     passe.cartas = passe.cartas.filter((carta) => !cartaIds.includes(carta.id));
 
     return this.passeRepositorio.save(passe);
+  }
+
+  async addBulkCards(
+    userId: number,
+    cardNames: string[],
+  ): Promise<BulkImportResult> {
+    console.log(
+      `[PasseService] Adding bulk cards for user ${userId}:`,
+      cardNames,
+    );
+
+    // Get user's passe or create one
+    let passe = await this.passeRepositorio.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['cartas'],
+    });
+
+    if (!passe) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Use the generic bulk import service
+    return this.utilsService.addBulkCards(cardNames, {
+      entityName: 'Passe',
+      checkExisting: async (names: string[]) => {
+        // Return set of existing card names (lowercase)
+        return new Set(
+          passe.cartas?.map((carta) => carta.name.toLowerCase()) || [],
+        );
+      },
+      addCards: async (cardIds: number[]) => {
+        await this.addCartasToPasse(passe.id, cardIds);
+      },
+    });
   }
 }

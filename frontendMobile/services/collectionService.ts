@@ -1,16 +1,16 @@
 import api from "./api";
 
-export interface PasseCardDTO {
+export interface ColecaoCardDTO {
   id: number;
   name: string;
   set?: string;
   image?: string;
 }
 
-export interface PasseDTO {
+export interface ColecaoDTO {
   id: number;
   usuarioId: number;
-  cartas: PasseCardDTO[];
+  cartas: ColecaoCardDTO[];
 }
 
 export interface BulkImportResult {
@@ -19,8 +19,10 @@ export interface BulkImportResult {
   alreadyExists: string[];
 }
 
-export async function fetchUserPasse(userId: number): Promise<PasseDTO | null> {
-  const res = await api.get<PasseDTO | null>(`/passe/user/${userId}`);
+export async function fetchUserColecao(
+  userId: number
+): Promise<ColecaoDTO | null> {
+  const res = await api.get<ColecaoDTO | null>(`/colecao/user/${userId}`);
   return res.data;
 }
 
@@ -30,18 +32,18 @@ export async function bulkImportCards(
 ): Promise<BulkImportResult> {
   try {
     console.log(
-      `[passeService] Bulk importing ${cardNames.length} cards for user ${userId}`
+      `[colecaoService] Bulk importing ${cardNames.length} cards for user ${userId}`
     );
 
     const response = await api.post<BulkImportResult>(
-      `/passe/${userId}/bulk-import`,
+      `/colecao/${userId}/bulk-import`,
       { cardNames }
     );
 
-    console.log(`[passeService] Bulk import result:`, response.data);
+    console.log(`[colecaoService] Bulk import result:`, response.data);
     return response.data;
   } catch (error) {
-    console.error("[passeService] Bulk import failed:", error);
+    console.error("[colecaoService] Bulk import failed:", error);
     throw new Error("Failed to import cards");
   }
 }

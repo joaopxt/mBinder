@@ -28,4 +28,11 @@ export class LibraryController {
   async searchAllCards(@Query('query') query: string) {
     return this.libraryService.searchCardsAll(query);
   }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    console.log(`[LibraryController] findOne called with id: "${id}"`);
+    const cardId = parseInt(id, 10);
+    return this.libraryService.findOne(cardId);
+  }
 }

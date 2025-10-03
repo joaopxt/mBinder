@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
@@ -112,9 +112,12 @@ const HomeInner: React.FC = () => {
 };
 
 const Home: React.FC = () => (
-  <ThemeProvider forceDark>
-    <HomeInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <HomeInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

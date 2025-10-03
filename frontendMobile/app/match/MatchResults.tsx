@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
@@ -280,9 +280,12 @@ const MatchResultsInner: React.FC = () => {
 };
 
 const MatchResults: React.FC = () => (
-  <ThemeProvider forceDark>
-    <MatchResultsInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <MatchResultsInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

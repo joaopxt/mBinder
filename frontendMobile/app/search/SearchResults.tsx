@@ -9,7 +9,7 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING, RADIUS } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
@@ -153,9 +153,12 @@ const SearchResultsInner: React.FC = () => {
 };
 
 const SearchResults: React.FC = () => (
-  <ThemeProvider forceDark>
-    <SearchResultsInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <SearchResultsInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

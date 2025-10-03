@@ -9,6 +9,7 @@ import { PasseModule } from './passe/passe.module';
 import { WantModule } from './want/want.module';
 import { DeckModule } from './deck/deck.module';
 import { ColecaoModule } from './colecao/colecao.module';
+import { UtilsModule } from './utils/utils.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ColecaoModule } from './colecao/colecao.module';
     PasseModule,
     DeckModule,
     ColecaoModule,
+    UtilsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

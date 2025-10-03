@@ -7,7 +7,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import UserProfileHeader from "./_components/UserProfileHeader";
 import UserStats from "./_components/UserStats";
 import UserAccountForm from "./_components/UserAccountForm";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 
 const UserPage: React.FC = () => {
   const t = useAppTheme();
@@ -36,6 +36,7 @@ const UserPage: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: t.bg.base }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       <HeaderBar
         title="Profile"
         onMenuPress={handleMenuPress}

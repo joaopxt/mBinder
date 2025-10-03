@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
@@ -261,9 +261,12 @@ const TradePairInner: React.FC = () => {
 };
 
 const TradePair: React.FC = () => (
-  <ThemeProvider forceDark>
-    <TradePairInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <TradePairInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  BadRequestException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { WantService } from './want.service';
 import { CreateWantDto } from './dto/create-want.dto';
@@ -59,5 +61,41 @@ export class WantController {
     @Body('cartaIds') cartaIds: number[],
   ) {
     return this.wantService.removeCartasFromWant(wantId, cartaIds);
+  }
+
+  @Post(':userId/bulk-import')
+  async bulkImport(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() body: { cardNames: string[] },
+  ) {
+    console.log(
+      `[WantController] Bulk import for user ${userId}:`,
+      body.cardNames,
+    );
+
+    // Validate input
+    if (!body.cardNames || !Array.isArray(body.cardNames)) {
+      throw new BadRequestException('cardNames must be an array of strings');
+    }
+
+    if (body.cardNames.length === 0) {
+      throw new BadRequestException('cardNames array cannot be empty');
+    }
+
+    if (body.cardNames.some((name) => typeof name !== 'string')) {
+      throw new BadRequestException('All cardNames must be strings');
+    }
+
+    try {
+      const result = await this.wantService.addBulkCards(
+        userId,
+        body.cardNames,
+      );
+      console.log(`[WantController] Bulk import completed:`, result);
+      return result;
+    } catch (error) {
+      console.error(`[WantController] Bulk import failed:`, error);
+      throw error;
+    }
   }
 }

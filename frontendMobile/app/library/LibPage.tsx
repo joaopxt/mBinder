@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import { SPACING } from "../../theme/tokens";
 import HeaderBar from "../../components/layout/HeaderBar";
@@ -207,9 +207,12 @@ const LibContent: React.FC = () => {
 };
 
 const LibPage: React.FC = () => (
-  <ThemeProvider forceDark>
-    <LibContent />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <LibContent />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({

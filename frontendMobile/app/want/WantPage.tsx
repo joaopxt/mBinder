@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState } from "react";
 import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ThemeProvider, useAppTheme } from "../../theme/ThemeProvider";
 import HeaderBar from "../../components/layout/HeaderBar";
 import Sidebar from "../../components/layout/Sidebar";
@@ -11,6 +11,9 @@ import { WantCard } from "../../types/cardTypes";
 import WantCardGrid from "./components/WantCardGrid";
 import { FilterState } from "@/components/filter/types";
 import SearchModal from "@/components/search/SearchModal";
+import { bulkImportCards } from "@/services/wantService";
+import BulkImportModal from "@/components/common/BulkImportModal";
+import BulkImportFab from "@/components/common/BulkImportFab";
 
 const IMAGE_FALLBACK = "https://placehold.co/200x280?text=Card";
 
@@ -26,6 +29,7 @@ const WantInner: React.FC = () => {
   } = useUserWant(user?.id ?? null);
   const [sidebarVisible, setSidebarVisible] = React.useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [bulkImportVisible, setBulkImportVisible] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     colors: [],
     types: [],
@@ -49,9 +53,12 @@ const WantInner: React.FC = () => {
     console.log("Remover carta (não implementado):", id);
   }, []);
 
-  const handleCardPress = useCallback((card: WantCard) => {
-    console.log("Card pressed:", card.id);
-  }, []);
+  const handleCardPress = useCallback(
+    (card: WantCard) => {
+      router.push(`/carta/CartaPage?cardId=${card.id}`);
+    },
+    [router]
+  );
 
   const handleMenuPress = useCallback(() => {
     setSidebarVisible((prev) => !prev);
@@ -83,6 +90,30 @@ const WantInner: React.FC = () => {
     },
     [router]
   );
+
+  const handleBulkImportPress = () => {
+    setBulkImportVisible(true);
+  };
+
+  const handleBulkImportClose = () => {
+    setBulkImportVisible(false);
+  };
+
+  const handleBulkImport = async (cardNames: string[]) => {
+    if (!user?.id) {
+      throw new Error("No user selected");
+    }
+
+    const result = await bulkImportCards(user.id, cardNames);
+
+    // Refresh the passe list to show new cards
+    await refreshWant();
+
+    // Show detailed result if needed
+    if (result.notFound.length > 0 || result.alreadyExists.length > 0) {
+      console.log("Import completed with issues:", result);
+    }
+  };
 
   if (!user) {
     return (
@@ -161,6 +192,7 @@ const WantInner: React.FC = () => {
             Recarregar
           </Text>
         </View>
+        <BulkImportFab onPress={handleBulkImportPress} />
         <Sidebar
           visible={sidebarVisible}
           activeRoute="/want/WantPage"
@@ -174,6 +206,12 @@ const WantInner: React.FC = () => {
           placeholder="Search cards..."
           filters={filters}
           onFiltersChange={handleFiltersChange}
+        />
+        <BulkImportModal
+          visible={bulkImportVisible}
+          onClose={handleBulkImportClose}
+          onImport={handleBulkImport}
+          title="Import Cards to Want"
         />
       </SafeAreaView>
     );
@@ -197,7 +235,7 @@ const WantInner: React.FC = () => {
           onCardPress={handleCardPress}
           contentBottomPad={140}
         />
-
+        <BulkImportFab onPress={handleBulkImportPress} />
         <Sidebar
           visible={sidebarVisible}
           activeRoute="/want/WantPage"
@@ -212,15 +250,24 @@ const WantInner: React.FC = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
         />
+        <BulkImportModal
+          visible={bulkImportVisible}
+          onClose={handleBulkImportClose}
+          onImport={handleBulkImport}
+          title="Import Cards to Passe"
+        />
       </View>
     </SafeAreaView>
   );
 };
 
 const WantPage: React.FC = () => (
-  <ThemeProvider forceDark>
-    <WantInner />
-  </ThemeProvider>
+  <>
+    <Stack.Screen options={{ headerShown: false }} />
+    <ThemeProvider forceDark>
+      <WantInner />
+    </ThemeProvider>
+  </>
 );
 
 const styles = StyleSheet.create({
