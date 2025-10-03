@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePasseDto } from './dto/create-passe.dto';
 import { UpdatePasseDto } from './dto/update-passe.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -158,5 +162,52 @@ export class PasseService {
         await this.addCartasToPasse(passe.id, cardIds);
       },
     });
+  }
+
+  async addSingleCard(userId: number, cardId: number): Promise<void> {
+    console.log(`[PasseService] Adding card ${cardId} to user ${userId} passe`);
+
+    // Get user's passe
+    let passe = await this.passeRepositorio.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['cartas'],
+    });
+
+    if (!passe) {
+      // Create passe if it doesn't exist
+      const usuario = await this.usuarioRepositorio.findOne({
+        where: { id: userId },
+      });
+
+      if (!usuario) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      throw new NotFoundException(`Passe not found`);
+    }
+
+    // Check if card exists
+    const carta = await this.cartaRepositorio.findOne({
+      where: { id: cardId },
+    });
+
+    if (!carta) {
+      throw new NotFoundException(`Card with ID ${cardId} not found`);
+    }
+
+    // Check if card is already in passe
+    const cardAlreadyExists = passe.cartas?.some((c) => c.id === cardId);
+    if (cardAlreadyExists) {
+      throw new ConflictException(
+        `Card "${carta.name}" is already in your passe`,
+      );
+    }
+
+    // Add card using existing method
+    await this.addCartasToPasse(passe.id, [cardId]);
+
+    console.log(
+      `[PasseService] Card "${carta.name}" added to passe successfully`,
+    );
   }
 }

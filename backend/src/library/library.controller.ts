@@ -35,4 +35,14 @@ export class LibraryController {
     const cardId = parseInt(id, 10);
     return this.libraryService.findOne(cardId);
   }
+
+  @Get('card/:cardId/variants')
+  async getCardVariants(@Param('cardId') cardId: string) {
+    return this.libraryService.getCardVariants(+cardId);
+  }
+
+  @Get('card/name/:cardName/variants')
+  async getCardVariantsByName(@Param('cardName') cardName: string) {
+    return this.libraryService.getCardVariantsByName(cardName);
+  }
 }

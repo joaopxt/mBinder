@@ -9,6 +9,19 @@ export interface SearchResult {
   typeLine?: string;
 }
 
+export interface CardVariant {
+  id: number;
+  setName: string;
+  imageNormal?: string;
+  imageSmall?: string;
+}
+
+export interface CardVariantsResponse {
+  cardName: string;
+  variants: CardVariant[];
+  totalVariants: number;
+}
+
 // Helper function to handle errors properly
 function handleApiError(error: unknown, context: string): void {
   console.error(`[libraryService] ${context} failed:`, error);
@@ -102,5 +115,38 @@ export async function searchAllCards(query: string): Promise<SearchResult[]> {
   } catch (error: unknown) {
     handleApiError(error, "Search all");
     return [];
+  }
+}
+
+export async function getCardVariants(
+  cardId: number
+): Promise<CardVariantsResponse> {
+  try {
+    console.log(`[libraryService] Fetching variants for card ID: ${cardId}`);
+    const response = await api.get<CardVariantsResponse>(
+      `/library/card/${cardId}/variants`
+    );
+    console.log(`[libraryService] Variants response:`, response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`[libraryService] Failed to fetch card variants:`, error);
+    throw new Error("Failed to fetch card variants");
+  }
+}
+
+export async function getCardVariantsByName(
+  cardName: string
+): Promise<CardVariantsResponse> {
+  try {
+    const response = await api.get<CardVariantsResponse>(
+      `/library/card/name/${encodeURIComponent(cardName)}/variants`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `[libraryService] Failed to fetch card variants by name:`,
+      error
+    );
+    throw new Error("Failed to fetch card variants");
   }
 }

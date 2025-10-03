@@ -98,4 +98,23 @@ export class WantController {
       throw error;
     }
   }
+
+  @Post(':userId/add-card/:cardId')
+  async addSingleCard(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('cardId', ParseIntPipe) cardId: number,
+  ) {
+    console.log(
+      `[WantController] Adding card ${cardId} to user ${userId} want list`,
+    );
+
+    try {
+      const result = await this.wantService.addSingleCard(userId, cardId);
+      console.log(`[WantController] Card added successfully:`, result);
+      return { success: true, message: 'Card added to want list successfully' };
+    } catch (error) {
+      console.error(`[WantController] Failed to add card:`, error);
+      throw error;
+    }
+  }
 }

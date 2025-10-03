@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateWantDto } from './dto/create-want.dto';
 import { UpdateWantDto } from './dto/update-want.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -155,5 +159,54 @@ export class WantService {
         await this.addCartasToWant(want.id, cardIds);
       },
     });
+  }
+
+  async addSingleCard(userId: number, cardId: number): Promise<void> {
+    console.log(
+      `[WantService] Adding card ${cardId} to user ${userId} want list`,
+    );
+
+    // Get user's want list
+    let want = await this.wantRepositorio.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['cartas'],
+    });
+
+    if (!want) {
+      // Create want list if it doesn't exist
+      const usuario = await this.usuarioRepositorio.findOne({
+        where: { id: userId },
+      });
+
+      if (!usuario) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      throw new NotFoundException(`Want not found`);
+    }
+
+    // Check if card exists
+    const carta = await this.cartaRepositorio.findOne({
+      where: { id: cardId },
+    });
+
+    if (!carta) {
+      throw new NotFoundException(`Card with ID ${cardId} not found`);
+    }
+
+    // Check if card is already in want list
+    const cardAlreadyExists = want.cartas?.some((c) => c.id === cardId);
+    if (cardAlreadyExists) {
+      throw new ConflictException(
+        `Card "${carta.name}" is already in your want list`,
+      );
+    }
+
+    // Add card using existing method
+    await this.addCartasToWant(want.id, [cardId]);
+
+    console.log(
+      `[WantService] Card "${carta.name}" added to want list successfully`,
+    );
   }
 }

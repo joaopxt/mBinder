@@ -52,3 +52,31 @@ export async function bulkImportCards(
     throw new Error("Failed to import cards to want list");
   }
 }
+
+export async function addCardToWant(
+  userId: number,
+  cardId: number
+): Promise<void> {
+  try {
+    console.log(
+      `[wantService] Adding card ${cardId} to user ${userId} want list`
+    );
+
+    const response = await api.post(`/want/${userId}/add-card/${cardId}`);
+
+    console.log(
+      `[wantService] Card added to want list successfully:`,
+      response.data
+    );
+  } catch (error: any) {
+    console.error("[wantService] Failed to add card to want list:", error);
+
+    if (error.response?.status === 409) {
+      throw new Error("Card is already in your want list");
+    } else if (error.response?.status === 404) {
+      throw new Error("Card or user not found");
+    } else {
+      throw new Error("Failed to add card to want list");
+    }
+  }
+}

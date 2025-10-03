@@ -135,4 +135,43 @@ export class LibraryService {
       throw new Error('Failed to search cards');
     }
   }
+
+  async getCardVariants(cardId: number) {
+    console.log(`[LibraryService] Getting variants for card ID: ${cardId}`);
+
+    // First get the card to find its name
+    const originalCard = await this.cartaRepositorio.findOne({
+      where: { id: cardId },
+    });
+
+    if (!originalCard) {
+      throw new Error(`Card with ID ${cardId} not found`);
+    }
+
+    return this.getCardVariantsByName(originalCard.name);
+  }
+
+  async getCardVariantsByName(cardName: string) {
+    console.log(`[LibraryService] Getting variants for card name: ${cardName}`);
+
+    // Find all cards with the same name (different sets/versions)
+    const variants = await this.cartaRepositorio.find({
+      where: { name: cardName },
+      order: { setName: 'ASC' },
+    });
+
+    // Group by set and return structured data
+    const setVariants = variants.map((card) => ({
+      id: card.id,
+      setName: card.setName || 'Unknown',
+      imageNormal: card.imageNormal,
+      imageSmall: card.imageSmall,
+    }));
+
+    return {
+      cardName,
+      variants: setVariants,
+      totalVariants: variants.length,
+    };
+  }
 }

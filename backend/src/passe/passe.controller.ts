@@ -92,4 +92,23 @@ export class PasseController {
       throw error;
     }
   }
+
+  @Post(':userId/add-card/:cardId')
+  async addSingleCard(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('cardId', ParseIntPipe) cardId: number,
+  ) {
+    console.log(
+      `[PasseController] Adding card ${cardId} to user ${userId} passe`,
+    );
+
+    try {
+      const result = await this.passeService.addSingleCard(userId, cardId);
+      console.log(`[PasseController] Card added successfully:`, result);
+      return { success: true, message: 'Card added to passe successfully' };
+    } catch (error) {
+      console.error(`[PasseController] Failed to add card:`, error);
+      throw error;
+    }
+  }
 }

@@ -13,6 +13,7 @@ import { SPACING, RADIUS } from "../../../theme/tokens";
 interface SetOption {
   value: string;
   label: string;
+  id?: string; // Add unique identifier
 }
 
 interface SetSelectorProps {
@@ -36,7 +37,13 @@ const SetSelector: React.FC<SetSelectorProps> = ({
     setIsOpen(false);
   };
 
-  const renderSetOption = ({ item }: { item: SetOption }) => (
+  const renderSetOption = ({
+    item,
+    index,
+  }: {
+    item: SetOption;
+    index: number;
+  }) => (
     <Pressable
       style={[
         styles.option,
@@ -44,13 +51,30 @@ const SetSelector: React.FC<SetSelectorProps> = ({
           backgroundColor: t.bg.alt,
           borderBottomColor: t.border.base,
         },
+        // Add different styling for selected item
+        item.value === selectedSet && {
+          backgroundColor: t.primarySoft,
+        },
       ]}
       onPress={() => handleSelect(item.value)}
       android_ripple={{ color: t.primarySoft }}
     >
-      <Text style={[styles.optionText, { color: t.text.primary }]}>
+      <Text
+        style={[
+          styles.optionText,
+          { color: t.text.primary },
+          // Highlight selected item
+          item.value === selectedSet && {
+            fontWeight: "600",
+            color: t.primary,
+          },
+        ]}
+      >
         {item.label}
       </Text>
+      {item.value === selectedSet && (
+        <Text style={[styles.checkmark, { color: t.primary }]}>✓</Text>
+      )}
     </Pressable>
   );
 
@@ -93,9 +117,11 @@ const SetSelector: React.FC<SetSelectorProps> = ({
           >
             <FlatList
               data={availableSets}
-              keyExtractor={(item) => item.value}
+              keyExtractor={(item, index) => `${item.value}-${index}`} // Fix: Use unique key
               renderItem={renderSetOption}
               style={styles.optionsList}
+              showsVerticalScrollIndicator={true}
+              bounces={false}
             />
           </View>
         </Pressable>
@@ -149,12 +175,21 @@ const styles = StyleSheet.create({
     maxHeight: 250,
   },
   option: {
+    flexDirection: "row", // Add flex direction for checkmark
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   optionText: {
     fontSize: 16,
+    flex: 1,
+  },
+  checkmark: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: SPACING.sm,
   },
 });
 
